@@ -24,6 +24,7 @@ References:
 
 var fs = require('fs');
 var rest = require('restler');
+var util = require('util');
 var program = require('commander');
 var cheerio = require('cheerio');
 var HTMLFILE_DEFAULT = "index.html";
@@ -71,23 +72,21 @@ if(require.main == module) {
         .parse(process.argv);
     if(program.url) {
 	var url = program.url;
-	rest.get(url).on('complete', function(result) {
-	    var instr = function(result) {
-		return result.toString();
-	    } 	
-	    $ = function(instr) {
-		return cheerio.load(instr);
+	var checkJson = rest.get(url).once('complete', function(result) {
+	    var data = util.puts(result);
+	    var datastring = data.toString();
+	    $ = function(datastring) {
+		return cheerio.load(datastring);
 		}
 	    var checks = loadChecks(program.checks).sort();
 	    var out = {};
 	    for(var ii in checks) {
 		var present = $(checks[ii]).length > 0;
 		out[checks[ii]] = present;
-	    }
-	    var checkJson = function(out) {
-		return out;
-	    }
+	        }
+	    return out;
 	})
+	console.log(checkJson);
     } else {
 	var checkJson = checkHtmlFile(program.file, program.checks);
     }
